@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/xsadia/secred/storage"
 )
 
 type Server struct {
@@ -21,22 +22,21 @@ func (a *Server) Initialize(host, user, password, dbname string) {
 		fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", host, user, password, dbname)
 
 	var err error
-	a.DB, err = sql.Open("postgres", connectionString)
+	a.DB, err = storage.GetDB(connectionString)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	a.Router = mux.NewRouter()
-
-	a.initializeRoutes()
 }
 
 func (a *Server) Run(address string) {
 	log.Fatal(http.ListenAndServe(address, a.Router))
 }
 
-func (a *Server) initializeRoutes() {
+func (a *Server) InitializeRoutes() {
+
+	a.Router = mux.NewRouter()
+
 	a.Router.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		response := make(map[string]bool)
 
