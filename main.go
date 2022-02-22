@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"github.com/xsadia/secred/cmd/app"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	a := app.App{}
+
+	a.Run(":1337")
 }
