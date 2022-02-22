@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/xsadia/secred/cmd/app"
+	"github.com/xsadia/secred/api"
 )
 
 func getEnv(key string) string {
@@ -18,12 +18,13 @@ func getEnv(key string) string {
 }
 
 func main() {
-	a := app.App{}
-	a.Initialize(
+	s := api.Server{}
+	s.InitializeRoutes()
+	s.InitializeDB(
 		getEnv("APP_DB_HOST"),
 		getEnv("APP_DB_USERNAME"),
 		getEnv("APP_DB_PASSWORD"),
 		getEnv("APP_DB_NAME"),
 	)
-	a.Run(":1337")
+	s.Run(":1337")
 }

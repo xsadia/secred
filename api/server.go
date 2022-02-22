@@ -17,7 +17,7 @@ type Server struct {
 	DB     *sql.DB
 }
 
-func (a *Server) Initialize(host, user, password, dbname string) {
+func (a *Server) InitializeDB(host, user, password, dbname string) {
 	connectionString :=
 		fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", host, user, password, dbname)
 
