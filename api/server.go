@@ -22,7 +22,7 @@ func (a *Server) InitializeDB(host, user, password, dbname string) {
 		fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", host, user, password, dbname)
 
 	var err error
-	a.DB, err = storage.GetDB(connectionString)
+	a.DB, err = storage.NewDB(connectionString)
 
 	if err != nil {
 		log.Fatal(err)
