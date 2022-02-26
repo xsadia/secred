@@ -18,10 +18,10 @@ func TestMain(m *testing.M) {
 
 	s.InitializeRoutes()
 	s.InitializeDB(
-		config.GetEnv("APP_DB_HOST"),
-		config.GetEnv("APP_DB_USERNAME"),
-		config.GetEnv("APP_DB_PASSWORD"),
-		config.GetEnv("APP_DB_NAME"),
+		config.GetEnvTest("APP_DB_HOST"),
+		config.GetEnvTest("APP_DB_USERNAME"),
+		config.GetEnvTest("APP_DB_PASSWORD"),
+		config.GetEnvTest("APP_DB_NAME"),
 	)
 
 	code := m.Run()
@@ -32,24 +32,46 @@ func TestMain(m *testing.M) {
 }
 
 func TestCreateUser(t *testing.T) {
-	clearTables()
-	var jsonStr = []byte(`{"email":"testuser@example.com", "username":"testUser","password":"123123"}`)
-	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
 
-	response := executeRequest(r)
-	checkResponseCode(t, 201, response.Code)
+	t.Run("should create an user and return http code 204 if e-mail is available", func(t *testing.T) {
+		clearTables()
 
-	var m map[string]interface{}
-	json.Unmarshal(response.Body.Bytes(), &m)
+		var jsonStr = []byte(`{
+		"email":"testuser@example.com", 
+		"username":"testUser",
+		"password":"123123"
+		}`)
+		r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(jsonStr))
+		r.Header.Set("Content-Type", "application/json")
 
-	if m["email"] != "testuser@example.com" {
-		t.Errorf("expected email to be %q, got %q", "testuser@example", m["email"])
-	}
+		response := executeRequest(r)
+		checkResponseCode(t, 204, response.Code)
+	})
 
-	if m["username"] != "testUser" {
-		t.Errorf("")
-	}
+	t.Run("should not create user and return http code 409 if e-mail is already in use", func(t *testing.T) {
+		clearTables()
+
+		var jsonStr = []byte(`{
+		"email":"testuser@example.com", 
+		"username":"testUser",
+		"password":"123123"
+		}`)
+		r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(jsonStr))
+		r.Header.Set("Content-Type", "application/json")
+
+		executeRequest(r)
+
+		r, _ = http.NewRequest("POST", "/user", bytes.NewBuffer(jsonStr))
+		response := executeRequest(r)
+
+		checkResponseCode(t, 409, response.Code)
+		var m map[string]string
+		json.Unmarshal(response.Body.Bytes(), &m)
+
+		if m["error"] != emailAlreadyInUserError {
+			t.Errorf("expected '%v', got '%v'", emailAlreadyInUserError, m["error"])
+		}
+	})
 }
 
 func executeRequest(r *http.Request) *httptest.ResponseRecorder {
@@ -60,6 +82,7 @@ func executeRequest(r *http.Request) *httptest.ResponseRecorder {
 }
 
 func checkResponseCode(t *testing.T, expected, actual int) {
+	t.Helper()
 	if expected != actual {
 		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
 	}
