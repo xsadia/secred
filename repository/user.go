@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -13,20 +14,30 @@ type User struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func hashPassword(password []byte, salt int) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword(password, salt)
+func hashPassword(password []byte, salt int) string {
+	hash, _ := bcrypt.GenerateFromPassword(password, salt)
 
-	if err != nil {
-		return "", err
-	}
-
-	return string(hash), nil
+	return string(hash)
 }
 
 func checkEMailAvailability(email string, db *sql.DB) (err error) {
-	return db.QueryRow("SELECT COUNT(*) FROM users WHERE users.email = $1", email).Scan(&err)
+	return db.QueryRow("SELECT * FROM users WHERE users.email = $1", email).Scan(&err)
 }
 
-// func (u *User) Create(db *sql.DB) error {
+func (u *User) Create(db *sql.DB) error {
+	err := checkEMailAvailability(u.Email, db)
 
-// }
+	if err != nil && err != sql.ErrNoRows {
+		return errors.New("e-mail already in use")
+	}
+
+	u.Password = hashPassword([]byte(u.Password), 8)
+
+	_, err =
+		db.Exec(
+			"INSERT INTO users (email, username, password) VALUES ($1, $2, $3)",
+			u.Email, u.Username, u.Password,
+		)
+
+	return err
+}
