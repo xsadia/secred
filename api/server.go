@@ -59,19 +59,21 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := decoder.Decode(&u); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
 	}
 
 	defer r.Body.Close()
 
 	if err := u.Create(s.DB); err != nil {
 		if err.Error() == emailAlreadyInUserError {
-			respondWithError(w, http.StatusBadRequest, emailAlreadyInUserError)
+			respondWithError(w, http.StatusConflict, emailAlreadyInUserError)
 		} else {
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 		}
+		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, map[string]string{"result": "success"})
+	respondWithJSON(w, http.StatusNoContent, map[string]string{})
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
