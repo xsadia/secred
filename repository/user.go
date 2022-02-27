@@ -3,8 +3,6 @@ package repository
 import (
 	"database/sql"
 	"errors"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -12,12 +10,6 @@ type User struct {
 	Username     string `json:"username"`
 	Password     string `json:"password"`
 	RefreshToken string `json:"refresh_token"`
-}
-
-func hashPassword(password []byte, salt int) string {
-	hash, _ := bcrypt.GenerateFromPassword(password, salt)
-
-	return string(hash)
 }
 
 func checkEMailAvailability(email string, db *sql.DB) (err error) {
@@ -30,8 +22,6 @@ func (u *User) Create(db *sql.DB) error {
 	if err != nil && err != sql.ErrNoRows {
 		return errors.New("e-mail already in use")
 	}
-
-	u.Password = hashPassword([]byte(u.Password), 8)
 
 	_, err =
 		db.Exec(

@@ -11,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/xsadia/secred/repository"
 	"github.com/xsadia/secred/storage"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Server struct {
@@ -53,6 +54,12 @@ func (s *Server) InitializeRoutes() {
 	}).Methods("GET")
 }
 
+func hashPassword(password []byte, salt int) string {
+	hash, _ := bcrypt.GenerateFromPassword(password, salt)
+
+	return string(hash)
+}
+
 func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	var u repository.User
 	decoder := json.NewDecoder(r.Body)
@@ -61,6 +68,8 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
+
+	u.Password = hashPassword([]byte(u.Password), 8)
 
 	defer r.Body.Close()
 
