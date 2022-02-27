@@ -6,20 +6,23 @@ import (
 )
 
 type User struct {
+	Id           string `json:"id"`
 	Email        string `json:"email"`
 	Username     string `json:"username"`
 	Password     string `json:"password"`
 	RefreshToken string `json:"refresh_token"`
 }
 
-func checkEMailAvailability(email string, db *sql.DB) (err error) {
-	return db.QueryRow("SELECT * FROM users WHERE users.email = $1", email).Scan(&err)
+func (u *User) GetUserByEmail(db *sql.DB) error {
+	return db.QueryRow(
+		"SELECT id, email, username FROM users WHERE users.email = $1", u.Email,
+	).Scan(&u.Id, &u.Email, &u.Username)
 }
 
 func (u *User) Create(db *sql.DB) error {
-	err := checkEMailAvailability(u.Email, db)
+	err := u.GetUserByEmail(db)
 
-	if err != nil && err != sql.ErrNoRows {
+	if err != sql.ErrNoRows {
 		return errors.New("e-mail already in use")
 	}
 
