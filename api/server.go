@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/xsadia/secred/config"
 	"github.com/xsadia/secred/repository"
 	"github.com/xsadia/secred/storage"
 	"golang.org/x/crypto/bcrypt"
@@ -19,7 +20,10 @@ type Server struct {
 	DB     *sql.DB
 }
 
-const emailAlreadyInUserError = "e-mail already in use"
+const (
+	emailAlreadyInUserError            = "e-mail already in use"
+	wrongEmailPasswordCombinationError = "Wrong e-mail/password combination"
+)
 
 func (s *Server) InitializeDB(host, user, password, dbname string) {
 	connectionString :=
@@ -41,6 +45,7 @@ func (s *Server) InitializeRoutes() {
 
 	s.Router = mux.NewRouter()
 	s.Router.HandleFunc("/user", s.createUser).Methods("POST")
+	s.Router.HandleFunc("/auth", s.authUser).Methods("POST")
 	s.Router.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		response := make(map[string]bool)
 
@@ -83,6 +88,33 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusNoContent, map[string]string{})
+}
+
+func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
+	var u repository.User
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&u); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	unHashedPassword := u.Password
+
+	if err := u.GetUserByEmail(s.DB); err != nil {
+		respondWithError(w, http.StatusUnauthorized, wrongEmailPasswordCombinationError)
+		return
+	}
+
+	if err :=
+		bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(unHashedPassword)); err != nil {
+		respondWithError(w, http.StatusUnauthorized, wrongEmailPasswordCombinationError)
+		return
+	}
+
+	token, _ := config.CreateToken(u.Id)
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"token": token})
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
