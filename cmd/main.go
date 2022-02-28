@@ -9,10 +9,10 @@ func main() {
 	s := api.Server{}
 	s.InitializeRoutes()
 	s.InitializeDB(
-		config.GetEnv("APP_DB_HOST"),
-		config.GetEnv("APP_DB_USERNAME"),
-		config.GetEnv("APP_DB_PASSWORD"),
-		config.GetEnv("APP_DB_NAME"),
+		config.GetEnv(".env", "APP_DB_HOST"),
+		config.GetEnv(".env", "APP_DB_USERNAME"),
+		config.GetEnv(".env", "APP_DB_PASSWORD"),
+		config.GetEnv(".env", "APP_DB_NAME"),
 	)
 	s.Run(":1337")
 }
