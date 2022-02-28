@@ -15,8 +15,8 @@ type User struct {
 
 func (u *User) GetUserByEmail(db *sql.DB) error {
 	return db.QueryRow(
-		"SELECT id, email, username FROM users WHERE users.email = $1", u.Email,
-	).Scan(&u.Id, &u.Email, &u.Username)
+		"SELECT id, email, username, password FROM users WHERE users.email = $1", u.Email,
+	).Scan(&u.Id, &u.Email, &u.Username, &u.Password)
 }
 
 func (u *User) Create(db *sql.DB) error {
