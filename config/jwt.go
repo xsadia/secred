@@ -13,7 +13,7 @@ func CreateToken(id string) (token string, err error) {
 	atClaims["exp"] = time.Now().Add(time.Hour * 9999).Unix()
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	token, err = at.SignedString([]byte(GetEnv("JWT_ACCESS_SECRET")))
+	token, err = at.SignedString([]byte("Karinne"))
 
 	return token, err
 }
