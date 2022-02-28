@@ -6,11 +6,11 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func CreateToken(id string) (token string, err error) {
+func CreateToken(id string, exp time.Duration) (token string, err error) {
 
 	atClaims := jwt.MapClaims{}
 	atClaims["user_id"] = id
-	atClaims["exp"] = time.Now().Add(time.Hour * 9999).Unix()
+	atClaims["exp"] = time.Now().Add(time.Hour * exp).Unix()
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	token, err = at.SignedString([]byte("Karinne"))

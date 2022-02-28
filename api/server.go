@@ -112,7 +112,7 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _ := config.CreateToken(u.Id)
+	token, _ := config.CreateToken(u.Id, 9999)
 
 	user := repository.User{
 		Id:           u.Id,
