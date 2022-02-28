@@ -6,17 +6,17 @@ import (
 )
 
 type User struct {
-	Id           string `json:"id"`
-	Email        string `json:"email"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	RefreshToken string `json:"refresh_token"`
+	Id           string         `json:"id"`
+	Email        string         `json:"email"`
+	Username     string         `json:"username"`
+	Password     string         `json:"password"`
+	RefreshToken sql.NullString `json:"refresh_token"`
 }
 
 func (u *User) GetUserByEmail(db *sql.DB) error {
 	return db.QueryRow(
-		"SELECT id, email, username, password FROM users WHERE users.email = $1", u.Email,
-	).Scan(&u.Id, &u.Email, &u.Username, &u.Password)
+		"SELECT * FROM users WHERE users.email = $1", u.Email,
+	).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.RefreshToken)
 }
 
 func (u *User) Create(db *sql.DB) error {
