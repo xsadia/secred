@@ -114,7 +114,14 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 
 	token, _ := config.CreateToken(u.Id)
 
-	respondWithJSON(w, http.StatusOK, map[string]string{"token": token})
+	user := repository.User{
+		Id:           u.Id,
+		Email:        u.Email,
+		Username:     u.Username,
+		RefreshToken: u.RefreshToken,
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{"token": token, "user": user})
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
