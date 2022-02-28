@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/xsadia/secred/config"
@@ -103,7 +104,7 @@ func TestAuthUser(t *testing.T) {
 
 		checkResponseCode(t, 200, response.Code)
 
-		var m map[string]string
+		var m map[string]interface{}
 
 		json.Unmarshal(response.Body.Bytes(), &m)
 
@@ -111,6 +112,18 @@ func TestAuthUser(t *testing.T) {
 
 		if !ok {
 			t.Error("Expected token got nothing")
+		}
+
+		if m["user"].(map[string]interface{})["id"] == "" {
+			t.Error("expected id to be set")
+		}
+
+		if !reflect.DeepEqual(m["user"].(map[string]interface{})["email"], "testuser@example.com") {
+			t.Errorf("expected e-mail to be '%v', got '%v'", "testuser@example.com", m["email"])
+		}
+
+		if !reflect.DeepEqual(m["user"].(map[string]interface{})["username"], "testUser") {
+			t.Errorf("expected username to be '%v', got '%v'", "testUser", m["username"])
 		}
 	})
 
@@ -131,9 +144,10 @@ func TestAuthUser(t *testing.T) {
 		var m map[string]string
 		json.Unmarshal(response.Body.Bytes(), &m)
 
-		if m["error"] != wrongEmailPasswordCombinationError {
+		if !reflect.DeepEqual(m["error"], wrongEmailPasswordCombinationError) {
 			t.Errorf("expected '%v', got '%v'", wrongEmailPasswordCombinationError, m["error"])
 		}
+
 	})
 }
 
