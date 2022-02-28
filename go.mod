@@ -3,8 +3,10 @@ module github.com/xsadia/secred
 go 1.17
 
 require (
-	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/joho/godotenv v1.4.0 // indirect
-	github.com/lib/pq v1.10.4 // indirect
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	github.com/gorilla/mux v1.8.0
+	github.com/joho/godotenv v1.4.0
+	github.com/lib/pq v1.10.4
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 )
+
+require github.com/golang-jwt/jwt/v4 v4.3.0
