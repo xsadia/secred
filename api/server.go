@@ -45,6 +45,10 @@ func (s *Server) InitializeRoutes() {
 
 	s.Router = mux.NewRouter()
 	s.Router.HandleFunc("/user", s.createUser).Methods("POST")
+	s.Router.HandleFunc(
+		"/user/confirm/{id:[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$}",
+		s.activateUser,
+	).Methods("GET")
 	s.Router.HandleFunc("/auth", s.authUser).Methods("POST")
 	s.Router.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		response := make(map[string]bool)
@@ -63,6 +67,35 @@ func hashPassword(password []byte, salt int) string {
 	hash, _ := bcrypt.GenerateFromPassword(password, salt)
 
 	return string(hash)
+}
+
+func (s *Server) activateUser(w http.ResponseWriter, r *http.Request) {
+	var u repository.User
+	var err error
+
+	vars := mux.Vars(r)
+
+	u.Id = vars["id"]
+	err = u.GetUserById(s.DB)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	if u.Activated {
+		respondWithError(w, http.StatusConflict, "Account already activated")
+		return
+	}
+
+	err = u.Activate(s.DB)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	http.Redirect(w, r, "http://google.com", http.StatusPermanentRedirect)
 }
 
 func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +142,11 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 	if err :=
 		bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(unHashedPassword)); err != nil {
 		respondWithError(w, http.StatusUnauthorized, wrongEmailPasswordCombinationError)
+		return
+	}
+
+	if !u.Activated {
+		respondWithError(w, http.StatusForbidden, "Account not yet activated.")
 		return
 	}
 
