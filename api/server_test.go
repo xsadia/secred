@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/xsadia/secred/config"
+	"github.com/xsadia/secred/repository"
 )
 
 var s Server
@@ -85,19 +87,52 @@ func TestAuthUser(t *testing.T) {
 		"password":"123123"
 		}`)
 
+	var userAuthStr = []byte(`{
+		"email":"testuser@example.com",
+		"password":"123123"	
+		}`)
+
 	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(userCreationStr))
 	r.Header.Set("Content-Type", "application/json")
 
 	executeRequest(r)
 
-	t.Run("should return token if e-mail and password match", func(t *testing.T) {
+	t.Run("should return error and http code 403 if password and e-mail match but account isn't activated",
+		func(t *testing.T) {
 
-		var userAuthStr = []byte(`{
-			"email":"testuser@example.com", 
-			"password":"123123"
-			}`)
+			r, _ := http.NewRequest("POST", "/auth", bytes.NewBuffer(userAuthStr))
+			r.Header.Set("Content-Type", "application/json")
 
-		r, _ := http.NewRequest("POST", "/auth", bytes.NewBuffer(userAuthStr))
+			response := executeRequest(r)
+
+			checkResponseCode(t, http.StatusForbidden, response.Code)
+
+			var m map[string]string
+
+			json.Unmarshal(response.Body.Bytes(), &m)
+
+			if m["error"] != "Account not yet activated." {
+				t.Errorf("expected error '%v', got '%v'", "Account not yet activated.", m["error"])
+			}
+		})
+
+	t.Run("should return token if e-mail and password match and account is active", func(t *testing.T) {
+
+		u := repository.User{Email: "testuser@example.com"}
+
+		u.GetUserByEmail(s.DB)
+
+		var emptyBody = []byte(`
+			{}
+		`)
+
+		urlString := fmt.Sprintf("/user/confirm/%s", u.Id)
+
+		r, _ := http.NewRequest("GET", urlString, bytes.NewBuffer(emptyBody))
+
+		executeRequest(r)
+
+		r, _ = http.NewRequest("POST", "/auth", bytes.NewBuffer(userAuthStr))
 		r.Header.Set("Content-Type", "application/json")
 
 		response := executeRequest(r)
@@ -129,12 +164,12 @@ func TestAuthUser(t *testing.T) {
 
 	t.Run("should return error and http code 401 if password or e-mail don't match", func(t *testing.T) {
 
-		var userAuthStr = []byte(`{
-			"email":"testuser@example.com", 
-			"password":"123122"
-			}`)
+		var userWrongPassword = []byte(`{
+		"email":"testuser@example.com",
+		"password":"123122"	
+		}`)
 
-		r, _ := http.NewRequest("POST", "/auth", bytes.NewBuffer(userAuthStr))
+		r, _ := http.NewRequest("POST", "/auth", bytes.NewBuffer(userWrongPassword))
 		r.Header.Set("Content-Type", "application/json")
 
 		response := executeRequest(r)
@@ -148,6 +183,51 @@ func TestAuthUser(t *testing.T) {
 			t.Errorf("expected '%v', got '%v'", wrongEmailPasswordCombinationError, m["error"])
 		}
 
+	})
+
+}
+
+func TestUserActivation(t *testing.T) {
+	clearTables()
+
+	var userCreationStr = []byte(`{
+		"email":"testuser@example.com",
+		"username":"testUser",
+		"password":"123123"
+		}`)
+
+	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(userCreationStr))
+	r.Header.Set("Content-Type", "application/json")
+
+	executeRequest(r)
+
+	u := repository.User{Email: "testuser@example.com"}
+	u.GetUserByEmail(s.DB)
+
+	t.Run("should return 308 if account activation is successful", func(t *testing.T) {
+
+		r, _ := http.NewRequest("GET", "/user/confirm/"+u.Id, bytes.NewBuffer([]byte(`{}`)))
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, 308, response.Code)
+	})
+
+	t.Run("should return error and http code 409 if user is already active", func(t *testing.T) {
+
+		r, _ := http.NewRequest("GET", "/user/confirm/"+u.Id, bytes.NewBuffer([]byte(`{}`)))
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, 409, response.Code)
+
+		var m map[string]string
+
+		json.Unmarshal(response.Body.Bytes(), &m)
+
+		if m["error"] != "Account already activated" {
+			t.Errorf("expected '%v', got '%v'", "Account already activated", m["error"])
+		}
 	})
 }
 
