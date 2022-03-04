@@ -11,7 +11,7 @@ func SendConfirmationEmail(to []string, id string) bool {
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
 
-	msg := []byte("Confirmation e-mail\nhttp://localhost:1337/user/confirm/" + id)
+	msg := []byte("Subject: E-mail de confirmação de conta\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nConfirmation e-mail\nhttp://localhost:1337/user/confirm/" + id)
 
 	auth := smtp.PlainAuth("", from, pmail, smtpHost)
 
