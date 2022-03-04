@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/xsadia/secred/config"
+	"github.com/xsadia/secred/internal"
 	"github.com/xsadia/secred/repository"
 	"github.com/xsadia/secred/storage"
 	"golang.org/x/crypto/bcrypt"
@@ -107,9 +108,9 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Password = hashPassword([]byte(u.Password), 8)
-
 	defer r.Body.Close()
+
+	u.Password = hashPassword([]byte(u.Password), 8)
 
 	if err := u.Create(s.DB); err != nil {
 		if err.Error() == emailAlreadyInUserError {
@@ -117,6 +118,16 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		} else {
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 		}
+		return
+	}
+
+	if err := u.GetUserByEmail(s.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	if sent := internal.SendConfirmationEmail([]string{u.Email}, u.Id); !sent {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -131,6 +142,8 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
+
+	defer r.Body.Close()
 
 	unHashedPassword := u.Password
 
