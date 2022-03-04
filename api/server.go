@@ -126,10 +126,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if sent := internal.SendConfirmationEmail([]string{u.Email}, u.Id); !sent {
-		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
+	go internal.SendConfirmationEmail([]string{u.Email}, u.Id)
 
 	respondWithJSON(w, http.StatusNoContent, map[string]string{})
 }
