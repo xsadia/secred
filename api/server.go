@@ -51,17 +51,6 @@ func (s *Server) InitializeRoutes() {
 		s.activateUser,
 	).Methods("GET")
 	s.Router.HandleFunc("/auth", s.authUser).Methods("POST")
-	s.Router.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		response := make(map[string]bool)
-
-		response["ok"] = true
-
-		w.Header().Set("Content-type", "application/json")
-		jsonResp, _ := json.Marshal(&response)
-
-		w.Write(jsonResp)
-
-	}).Methods("GET")
 }
 
 func hashPassword(password []byte, salt int) string {
