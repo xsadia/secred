@@ -53,12 +53,6 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/auth", s.authUser).Methods("POST")
 }
 
-func hashPassword(password []byte, salt int) string {
-	hash, _ := bcrypt.GenerateFromPassword(password, salt)
-
-	return string(hash)
-}
-
 func (s *Server) activateUser(w http.ResponseWriter, r *http.Request) {
 	var u repository.User
 	var err error
@@ -99,14 +93,15 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	u.Password = hashPassword([]byte(u.Password), 8)
+	u.Password = internal.HashPassword([]byte(u.Password), 8)
 
 	if err := u.Create(s.DB); err != nil {
 		if err.Error() == emailAlreadyInUserError {
 			respondWithError(w, http.StatusConflict, emailAlreadyInUserError)
-		} else {
-			respondWithError(w, http.StatusInternalServerError, err.Error())
+			return
 		}
+
+		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
