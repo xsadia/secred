@@ -151,6 +151,7 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 		Email:        u.Email,
 		Username:     u.Username,
 		RefreshToken: u.RefreshToken,
+		Activated:    u.Activated,
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]interface{}{"token": token, "user": user})
