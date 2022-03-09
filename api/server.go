@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	"github.com/xsadia/secred/config"
 	"github.com/xsadia/secred/internal"
 	"github.com/xsadia/secred/repository"
 	"github.com/xsadia/secred/storage"
@@ -51,6 +50,8 @@ func (s *Server) InitializeRoutes() {
 		s.activateUser,
 	).Methods("GET")
 	s.Router.HandleFunc("/auth", s.authUser).Methods("POST")
+	s.Router.HandleFunc("/warehouse", s.getWareHouseItems).Methods("GET")
+	s.Router.HandleFunc("/warehouse", s.createWarehouseItem).Methods("POST")
 }
 
 func (s *Server) activateUser(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +145,7 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _ := config.CreateToken(u.Id, 9999)
+	token, _ := internal.CreateToken(u.Id, 9999)
 
 	user := repository.User{
 		Id:           u.Id,
@@ -155,6 +156,14 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]interface{}{"token": token, "user": user})
+}
+
+func (s *Server) getWareHouseItems(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
