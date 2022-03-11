@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -23,6 +24,8 @@ type Server struct {
 const (
 	emailAlreadyInUserError            = "e-mail already in use"
 	wrongEmailPasswordCombinationError = "Wrong e-mail/password combination"
+	internalServerError                = "Internal server error"
+	invalidRequestPayloadError         = "Invalid request payload"
 )
 
 func (s *Server) InitializeDB(host, user, password, dbname string) {
@@ -76,7 +79,7 @@ func (s *Server) activateUser(w http.ResponseWriter, r *http.Request) {
 	err = u.Activate(s.DB)
 
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		respondWithError(w, http.StatusInternalServerError, internalServerError)
 		return
 	}
 
@@ -88,26 +91,21 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	if err := decoder.Decode(&u); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		respondWithError(w, http.StatusBadRequest, invalidRequestPayloadError)
 		return
 	}
 
 	defer r.Body.Close()
 
-	u.Password = internal.HashPassword([]byte(u.Password), 8)
-
-	if err := u.Create(s.DB); err != nil {
-		if err.Error() == emailAlreadyInUserError {
-			respondWithError(w, http.StatusConflict, emailAlreadyInUserError)
-			return
-		}
-
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+	if err := u.GetUserByEmail(s.DB); err == nil {
+		respondWithError(w, http.StatusConflict, emailAlreadyInUserError)
 		return
 	}
 
-	if err := u.GetUserByEmail(s.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
+	u.Password = internal.HashPassword([]byte(u.Password), 8)
+
+	if err := u.Create(s.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -121,7 +119,7 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	if err := decoder.Decode(&u); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		respondWithError(w, http.StatusBadRequest, invalidRequestPayloadError)
 		return
 	}
 
@@ -159,11 +157,56 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getWareHouseItems(w http.ResponseWriter, r *http.Request) {
+	var count, start int
+	startQuery := r.URL.Query().Get("start")
+	countQuery := r.URL.Query().Get("count")
 
+	if startQuery == "" {
+		start = 0
+	} else {
+		start, _ = strconv.Atoi(startQuery)
+	}
+
+	if countQuery == "" {
+		count = 10
+	} else {
+		count, _ = strconv.Atoi(countQuery)
+	}
+
+	items, err := repository.GetWarehouseItems(s.DB, start, count)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, internalServerError)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, items)
 }
 
 func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
+	var wi repository.WarehouseItem
 
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&wi); err != nil {
+		respondWithError(w, http.StatusBadRequest, invalidRequestPayloadError)
+		return
+	}
+
+	defer r.Body.Close()
+
+	if err := wi.CreateWarehouseItem(s.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, internalServerError)
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		"id":       wi.Id,
+		"name":     wi.Name,
+		"quantity": wi.Quantity,
+		"min":      wi.Min,
+		"max":      wi.Max,
+	})
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
