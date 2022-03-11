@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
 )
 
 type User struct {
@@ -32,13 +31,7 @@ func (u *User) Activate(db *sql.DB) error {
 }
 
 func (u *User) Create(db *sql.DB) error {
-	err := u.GetUserByEmail(db)
-
-	if err != sql.ErrNoRows {
-		return errors.New("e-mail already in use")
-	}
-
-	_, err =
+	_, err :=
 		db.Exec(
 			"INSERT INTO users (email, username, password) VALUES ($1, $2, $3)",
 			u.Email, u.Username, u.Password,
