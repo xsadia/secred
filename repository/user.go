@@ -31,11 +31,11 @@ func (u *User) Activate(db *sql.DB) error {
 }
 
 func (u *User) Create(db *sql.DB) error {
-	_, err :=
-		db.Exec(
-			"INSERT INTO users (email, username, password) VALUES ($1, $2, $3)",
+	err :=
+		db.QueryRow(
+			"INSERT INTO users (email, username, password) VALUES ($1, $2, $3) RETURNING id",
 			u.Email, u.Username, u.Password,
-		)
+		).Scan(&u.Id)
 
 	return err
 }
