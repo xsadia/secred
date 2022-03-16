@@ -3,10 +3,12 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -157,6 +159,31 @@ func (s *Server) authUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getWareHouseItems(w http.ResponseWriter, r *http.Request) {
+	ah := r.Header.Get("Authorization")
+
+	token, err := validateAuthHeader(ah)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	claims, err := internal.VerifyToken(token)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	uid := fmt.Sprintf("%v", claims["user_id"])
+
+	u := repository.User{Id: uid}
+
+	if err = u.GetUserById(s.DB); err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
+		return
+	}
+
 	var count, start int
 	startQuery := r.URL.Query().Get("start")
 	countQuery := r.URL.Query().Get("count")
@@ -184,6 +211,31 @@ func (s *Server) getWareHouseItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
+	ah := r.Header.Get("Authorization")
+
+	token, err := validateAuthHeader(ah)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	claims, err := internal.VerifyToken(token)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	uid := fmt.Sprintf("%v", claims["user_id"])
+
+	u := repository.User{Id: uid}
+
+	if err = u.GetUserById(s.DB); err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
+		return
+	}
+
 	var wi repository.WarehouseItem
 
 	decoder := json.NewDecoder(r.Body)
@@ -207,6 +259,22 @@ func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
 		"min":      wi.Min,
 		"max":      wi.Max,
 	})
+}
+
+func validateAuthHeader(header string) (string, error) {
+	if len(header) < 1 {
+		return "", errors.New("authorization header missing")
+	}
+
+	splitHeader := strings.Split(header, " ")
+
+	if len(splitHeader) == 1 {
+		return "", errors.New("invalid authorization header")
+	}
+
+	token := splitHeader[1]
+
+	return token, nil
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
