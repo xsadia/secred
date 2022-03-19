@@ -14,7 +14,20 @@ import (
 	"github.com/xsadia/secred/repository"
 )
 
-var s Server
+var (
+	s Server
+
+	userCreationStr = []byte(`{
+	"email":"testuser@example.com", 
+	"username":"testUser",
+	"password":"123123"
+	}`)
+
+	userAuthStr = []byte(`{
+	"email":"testuser@example.com",
+	"password":"123123"	
+	}`)
+)
 
 func TestMain(m *testing.M) {
 	s = Server{}
@@ -80,17 +93,6 @@ func TestCreateUser(t *testing.T) {
 
 func TestAuthUser(t *testing.T) {
 	clearTables()
-
-	var userCreationStr = []byte(`{
-		"email":"testuser@example.com", 
-		"username":"testUser",
-		"password":"123123"
-		}`)
-
-	var userAuthStr = []byte(`{
-		"email":"testuser@example.com",
-		"password":"123123"	
-		}`)
 
 	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(userCreationStr))
 	r.Header.Set("Content-Type", "application/json")
@@ -190,12 +192,6 @@ func TestAuthUser(t *testing.T) {
 func TestUserActivation(t *testing.T) {
 	clearTables()
 
-	var userCreationStr = []byte(`{
-		"email":"testuser@example.com",
-		"username":"testUser",
-		"password":"123123"
-		}`)
-
 	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(userCreationStr))
 	r.Header.Set("Content-Type", "application/json")
 
@@ -231,6 +227,80 @@ func TestUserActivation(t *testing.T) {
 	})
 }
 
+func TestWarehouseItems(t *testing.T) {
+	clearTables()
+
+	itemCreationString := []byte(`{
+		"name": "testItem",
+		"quantity": 2,
+		"min": 1,
+		"max": 3
+	}`)
+
+	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(userCreationStr))
+	r.Header.Set("Content-Type", "application/json")
+
+	executeRequest(r)
+
+	u := repository.User{Email: "testuser@example.com"}
+	u.GetUserByEmail(s.DB)
+
+	r, _ = http.NewRequest("GET", "/user/confirm/"+u.Id, bytes.NewBuffer([]byte(`{}`)))
+
+	executeRequest(r)
+
+	r, _ = http.NewRequest("POST", "/auth", bytes.NewBuffer(userAuthStr))
+
+	authResponse := executeRequest(r)
+
+	var am map[string]interface{}
+
+	json.Unmarshal(authResponse.Body.Bytes(), &am)
+
+	tokenString := fmt.Sprintf("bearer %v", am["token"])
+
+	t.Run("Should create item if user is authorized", func(t *testing.T) {
+
+		r, _ := http.NewRequest("POST", "/warehouse", bytes.NewBuffer(itemCreationString))
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, 201, response.Code)
+
+		var rs struct {
+			Id       string `json:"id"`
+			Name     string `json:"name"`
+			Error    string `json:"error"`
+			Quantity int    `json:"quantity"`
+			Min      int    `json:"min"`
+			Max      int    `json:"max"`
+		}
+
+		json.Unmarshal(response.Body.Bytes(), &rs)
+
+		if rs.Error != "" {
+			t.Errorf("Expected error to be nil got %q", rs.Error)
+		}
+
+		if rs.Name != "testItem" {
+			t.Errorf("Expected name to be testItem, got %q", rs.Name)
+		}
+
+		if rs.Quantity != 2 {
+			t.Errorf("Expected quantity to be 2, got %d", rs.Quantity)
+		}
+
+		if rs.Min != 1 {
+			t.Errorf("Expected min to be 1, got %d", rs.Min)
+		}
+
+		if rs.Max != 3 {
+			t.Errorf("Expected min to be 3, got %d", rs.Max)
+		}
+	})
+}
+
 func executeRequest(r *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	s.Router.ServeHTTP(rr, r)
@@ -247,4 +317,6 @@ func checkResponseCode(t *testing.T, expected, actual int) {
 
 func clearTables() {
 	s.DB.Exec("DELETE FROM users")
+
+	s.DB.Exec("DELETE FROM warehouse_items")
 }
