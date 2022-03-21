@@ -248,7 +248,7 @@ func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := wi.CreateWarehouseItem(s.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, internalServerError)
+		respondWithError(w, http.StatusConflict, "Item already registered")
 		return
 	}
 
