@@ -14,6 +14,15 @@ import (
 	"github.com/xsadia/secred/repository"
 )
 
+type ItemResponse struct {
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Error    string `json:"error"`
+	Quantity int    `json:"quantity"`
+	Min      int    `json:"min"`
+	Max      int    `json:"max"`
+}
+
 var (
 	s Server
 
@@ -215,7 +224,7 @@ func TestUserActivation(t *testing.T) {
 
 		response := executeRequest(r)
 
-		checkResponseCode(t, 409, response.Code)
+		checkResponseCode(t, http.StatusConflict, response.Code)
 
 		var m map[string]string
 
@@ -259,6 +268,8 @@ func TestWarehouseItems(t *testing.T) {
 
 	tokenString := fmt.Sprintf("bearer %v", am["token"])
 
+	var rs ItemResponse
+
 	t.Run("Should create item if user is authorized", func(t *testing.T) {
 
 		r, _ := http.NewRequest("POST", "/warehouse", bytes.NewBuffer(itemCreationString))
@@ -266,16 +277,7 @@ func TestWarehouseItems(t *testing.T) {
 
 		response := executeRequest(r)
 
-		checkResponseCode(t, 201, response.Code)
-
-		var rs struct {
-			Id       string `json:"id"`
-			Name     string `json:"name"`
-			Error    string `json:"error"`
-			Quantity int    `json:"quantity"`
-			Min      int    `json:"min"`
-			Max      int    `json:"max"`
-		}
+		checkResponseCode(t, http.StatusCreated, response.Code)
 
 		json.Unmarshal(response.Body.Bytes(), &rs)
 
@@ -297,6 +299,51 @@ func TestWarehouseItems(t *testing.T) {
 
 		if rs.Max != 3 {
 			t.Errorf("Expected min to be 3, got %d", rs.Max)
+		}
+	})
+
+	t.Run("Should return error if a item is already registered with the same name", func(t *testing.T) {
+		r, _ := http.NewRequest("POST", "/warehouse", bytes.NewBuffer(itemCreationString))
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusConflict, response.Code)
+	})
+
+	t.Run("Should return items if user is authorized", func(t *testing.T) {
+		r, _ := http.NewRequest("GET", "/warehouse", bytes.NewBuffer([]byte{}))
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var items []ItemResponse
+		json.Unmarshal(response.Body.Bytes(), &items)
+
+		if len(items) != 1 {
+			t.Errorf("Expected array to be of size 1, got %d", len(items))
+		}
+
+		if items[0].Error != "" {
+			t.Errorf("Expected error to be nil got %q", items[0].Error)
+		}
+
+		if items[0].Name != "testItem" {
+			t.Errorf("Expected name to be testItem, got %q", items[0].Name)
+		}
+
+		if items[0].Quantity != 2 {
+			t.Errorf("Expected quantity to be 2, got %d", items[0].Quantity)
+		}
+
+		if items[0].Min != 1 {
+			t.Errorf("Expected min to be 1, got %d", items[0].Min)
+		}
+
+		if items[0].Max != 3 {
+			t.Errorf("Expected min to be 3, got %d", items[0].Max)
 		}
 	})
 }
