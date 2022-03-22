@@ -346,6 +346,38 @@ func TestWarehouseItems(t *testing.T) {
 			t.Errorf("Expected min to be 3, got %d", items[0].Max)
 		}
 	})
+
+	t.Run("Should return item based on it's id if user is authorized", func(t *testing.T) {
+		r, _ := http.NewRequest("GET", "/warehouse/"+rs.Id, bytes.NewBuffer([]byte{}))
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var item ItemResponse
+		json.Unmarshal(response.Body.Bytes(), &item)
+
+		if item.Error != "" {
+			t.Errorf("Expected error to be nil got %q", item.Error)
+		}
+
+		if item.Name != "testItem" {
+			t.Errorf("Expected name to be testItem, got %q", item.Name)
+		}
+
+		if item.Quantity != 2 {
+			t.Errorf("Expected quantity to be 2, got %d", item.Quantity)
+		}
+
+		if item.Min != 1 {
+			t.Errorf("Expected min to be 1, got %d", item.Min)
+		}
+
+		if item.Max != 3 {
+			t.Errorf("Expected min to be 3, got %d", item.Max)
+		}
+	})
 }
 
 func executeRequest(r *http.Request) *httptest.ResponseRecorder {
