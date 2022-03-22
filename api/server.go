@@ -28,6 +28,7 @@ const (
 	wrongEmailPasswordCombinationError = "Wrong e-mail/password combination"
 	internalServerError                = "Internal server error"
 	invalidRequestPayloadError         = "Invalid request payload"
+	uuidRegexp                         = "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
 )
 
 func (s *Server) InitializeDB(host, user, password, dbname string) {
@@ -51,12 +52,13 @@ func (s *Server) InitializeRoutes() {
 	s.Router = mux.NewRouter()
 	s.Router.HandleFunc("/user", s.createUser).Methods("POST")
 	s.Router.HandleFunc(
-		"/user/confirm/{id:[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$}",
+		"/user/confirm/{id:"+uuidRegexp+"}",
 		s.activateUser,
 	).Methods("GET")
 	s.Router.HandleFunc("/auth", s.authUser).Methods("POST")
 	s.Router.HandleFunc("/warehouse", s.getWareHouseItems).Methods("GET")
 	s.Router.HandleFunc("/warehouse", s.createWarehouseItem).Methods("POST")
+	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.getWareHouseItem).Methods("GET")
 }
 
 func (s *Server) activateUser(w http.ResponseWriter, r *http.Request) {
@@ -168,16 +170,12 @@ func (s *Server) getWareHouseItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := internal.VerifyToken(token)
+	u, err := internal.ExtractUser(token)
 
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-
-	uid := fmt.Sprintf("%v", claims["user_id"])
-
-	u := repository.User{Id: uid}
 
 	if err = u.GetUserById(s.DB); err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
@@ -210,6 +208,42 @@ func (s *Server) getWareHouseItems(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, items)
 }
 
+func (s *Server) getWareHouseItem(w http.ResponseWriter, r *http.Request) {
+	ah := r.Header.Get("Authorization")
+
+	token, err := validateAuthHeader(ah)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	u, err := internal.ExtractUser(token)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	if err = u.GetUserById(s.DB); err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
+		return
+	}
+
+	var wi repository.WarehouseItem
+
+	vars := mux.Vars(r)
+
+	wi.Id = vars["id"]
+
+	if err = wi.GetWarehouseItemById(s.DB); err != nil {
+		respondWithError(w, http.StatusNotFound, "Item not found")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, wi)
+}
+
 func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
 	ah := r.Header.Get("Authorization")
 
@@ -220,16 +254,12 @@ func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := internal.VerifyToken(token)
+	u, err := internal.ExtractUser(token)
 
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-
-	uid := fmt.Sprintf("%v", claims["user_id"])
-
-	u := repository.User{Id: uid}
 
 	if err = u.GetUserById(s.DB); err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
@@ -252,13 +282,7 @@ func (s *Server) createWarehouseItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, map[string]interface{}{
-		"id":       wi.Id,
-		"name":     wi.Name,
-		"quantity": wi.Quantity,
-		"min":      wi.Min,
-		"max":      wi.Max,
-	})
+	respondWithJSON(w, http.StatusCreated, wi)
 }
 
 func validateAuthHeader(header string) (string, error) {
