@@ -1,9 +1,11 @@
 package internal
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/xsadia/secred/repository"
 )
 
 var notSoSecret = "Karinne"
@@ -33,4 +35,18 @@ func VerifyToken(token string) (jwt.MapClaims, error) {
 	}
 
 	return claims, nil
+}
+
+func ExtractUser(token string) (repository.User, error) {
+	claims, err := VerifyToken(token)
+
+	if err != nil {
+		return repository.User{}, err
+	}
+
+	uid := fmt.Sprintf("%v", claims["user_id"])
+
+	u := repository.User{Id: uid}
+
+	return u, nil
 }
