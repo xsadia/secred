@@ -133,13 +133,9 @@ func TestAuthUser(t *testing.T) {
 
 		u.GetUserByEmail(s.DB)
 
-		var emptyBody = []byte(`
-			{}
-		`)
-
 		urlString := fmt.Sprintf("/user/confirm/%s", u.Id)
 
-		r, _ := http.NewRequest("GET", urlString, bytes.NewBuffer(emptyBody))
+		r, _ := http.NewRequest("GET", urlString, nil)
 
 		executeRequest(r)
 
@@ -211,7 +207,7 @@ func TestUserActivation(t *testing.T) {
 
 	t.Run("should return 308 if account activation is successful", func(t *testing.T) {
 
-		r, _ := http.NewRequest("GET", "/user/confirm/"+u.Id, bytes.NewBuffer([]byte(`{}`)))
+		r, _ := http.NewRequest("GET", "/user/confirm/"+u.Id, nil)
 
 		response := executeRequest(r)
 
@@ -220,7 +216,7 @@ func TestUserActivation(t *testing.T) {
 
 	t.Run("should return error and http code 409 if user is already active", func(t *testing.T) {
 
-		r, _ := http.NewRequest("GET", "/user/confirm/"+u.Id, bytes.NewBuffer([]byte(`{}`)))
+		r, _ := http.NewRequest("GET", "/user/confirm/"+u.Id, nil)
 
 		response := executeRequest(r)
 
@@ -254,7 +250,7 @@ func TestWarehouseItems(t *testing.T) {
 	u := repository.User{Email: "testuser@example.com"}
 	u.GetUserByEmail(s.DB)
 
-	r, _ = http.NewRequest("GET", "/user/confirm/"+u.Id, bytes.NewBuffer([]byte(`{}`)))
+	r, _ = http.NewRequest("GET", "/user/confirm/"+u.Id, nil)
 
 	executeRequest(r)
 
@@ -312,7 +308,7 @@ func TestWarehouseItems(t *testing.T) {
 	})
 
 	t.Run("Should return items if user is authorized", func(t *testing.T) {
-		r, _ := http.NewRequest("GET", "/warehouse", bytes.NewBuffer([]byte{}))
+		r, _ := http.NewRequest("GET", "/warehouse", nil)
 		r.Header.Set("Authorization", tokenString)
 
 		response := executeRequest(r)
@@ -348,7 +344,7 @@ func TestWarehouseItems(t *testing.T) {
 	})
 
 	t.Run("Should return item based on it's id if user is authorized", func(t *testing.T) {
-		r, _ := http.NewRequest("GET", "/warehouse/"+rs.Id, bytes.NewBuffer([]byte{}))
+		r, _ := http.NewRequest("GET", "/warehouse/"+rs.Id, nil)
 		r.Header.Set("Authorization", tokenString)
 
 		response := executeRequest(r)
