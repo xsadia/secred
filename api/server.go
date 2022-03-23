@@ -43,13 +43,13 @@ func (s *Server) Run(address string) {
 func (s *Server) InitializeRoutes() {
 
 	s.Router = mux.NewRouter()
-	s.Router.HandleFunc("/user", s.CreateUser).Methods("POST")
+	s.Router.HandleFunc("/user", s.CreateUserHandler).Methods("POST")
 	s.Router.HandleFunc(
 		"/user/confirm/{id:"+uuidRegexp+"}",
-		s.ActivateUser,
+		s.ActivateUserHandler,
 	).Methods("GET")
-	s.Router.HandleFunc("/auth", s.AuthUser).Methods("POST")
-	s.Router.HandleFunc("/warehouse", s.GetWareHouseItems).Methods("GET")
-	s.Router.HandleFunc("/warehouse", s.CreateWarehouseItem).Methods("POST")
-	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.GetWareHouseItem).Methods("GET")
+	s.Router.HandleFunc("/auth", s.AuthUserHandler).Methods("POST")
+	s.Router.HandleFunc("/warehouse", s.GetWareHouseItemsHandler).Methods("GET")
+	s.Router.HandleFunc("/warehouse", s.CreateWarehouseItemHandler).Methods("POST")
+	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.GetWareHouseItemHandler).Methods("GET")
 }

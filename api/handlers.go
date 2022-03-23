@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *Server) ActivateUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ActivateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var u repository.User
 	var err error
 
@@ -42,7 +42,7 @@ func (s *Server) ActivateUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "http://google.com", http.StatusPermanentRedirect)
 }
 
-func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var u repository.User
 	decoder := json.NewDecoder(r.Body)
 
@@ -70,7 +70,7 @@ func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusNoContent, map[string]string{})
 }
 
-func (s *Server) AuthUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) AuthUserHandler(w http.ResponseWriter, r *http.Request) {
 	var u repository.User
 	decoder := json.NewDecoder(r.Body)
 
@@ -112,7 +112,7 @@ func (s *Server) AuthUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, map[string]interface{}{"token": token, "user": user})
 }
 
-func (s *Server) GetWareHouseItems(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetWareHouseItemsHandler(w http.ResponseWriter, r *http.Request) {
 	ah := r.Header.Get("Authorization")
 
 	token, err := validateAuthHeader(ah)
@@ -160,7 +160,7 @@ func (s *Server) GetWareHouseItems(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, items)
 }
 
-func (s *Server) GetWareHouseItem(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetWareHouseItemHandler(w http.ResponseWriter, r *http.Request) {
 	ah := r.Header.Get("Authorization")
 
 	token, err := validateAuthHeader(ah)
@@ -196,7 +196,7 @@ func (s *Server) GetWareHouseItem(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, wi)
 }
 
-func (s *Server) CreateWarehouseItem(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreateWarehouseItemHandler(w http.ResponseWriter, r *http.Request) {
 	ah := r.Header.Get("Authorization")
 
 	token, err := validateAuthHeader(ah)
