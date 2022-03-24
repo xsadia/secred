@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -37,7 +39,7 @@ func VerifyToken(token string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func ExtractUser(token string) (repository.User, error) {
+func ExtractUser(token string, db *sql.DB) (repository.User, error) {
 	claims, err := VerifyToken(token)
 
 	if err != nil {
@@ -47,6 +49,10 @@ func ExtractUser(token string) (repository.User, error) {
 	uid := fmt.Sprintf("%v", claims["user_id"])
 
 	u := repository.User{Id: uid}
+
+	if err = u.GetUserById(db); err != nil {
+		return repository.User{}, errors.New("invalid token claim")
+	}
 
 	return u, nil
 }
