@@ -130,7 +130,7 @@ func (s *Server) GetWareHouseItemsHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err = u.GetUserById(s.DB); err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
+		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
 		return
 	}
 
@@ -178,7 +178,7 @@ func (s *Server) GetWareHouseItemHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err = u.GetUserById(s.DB); err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
+		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
 		return
 	}
 
@@ -214,7 +214,7 @@ func (s *Server) CreateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err = u.GetUserById(s.DB); err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Invalid token claim")
+		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
 		return
 	}
 
@@ -235,6 +235,54 @@ func (s *Server) CreateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	respondWithJSON(w, http.StatusCreated, wi)
+}
+
+func (s *Server) UpdateWarehouseItemHandler(w http.ResponseWriter, r *http.Request) {
+	ah := r.Header.Get("Authorization")
+
+	token, err := validateAuthHeader(ah)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	u, err := internal.ExtractUser(token)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	if err = u.GetUserById(s.DB); err != nil {
+		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	var wi repository.WarehouseItem
+
+	decoder := json.NewDecoder(r.Body)
+
+	if err = decoder.Decode(&wi); err != nil {
+		respondWithError(w, http.StatusBadRequest, invalidRequestPayloadError)
+		return
+	}
+
+	wi.Id = vars["id"]
+
+	if err = wi.GetWarehouseItemById(s.DB); err != nil {
+		respondWithError(w, http.StatusNotFound, "Item not found")
+		return
+	}
+
+	if err = wi.UpdateWarehouseItem(s.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, internalServerError)
+		return
+	}
+
+	respondWithJSON(w, http.StatusNoContent, nil)
 }
 
 func validateAuthHeader(header string) (string, error) {

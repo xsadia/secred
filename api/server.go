@@ -21,6 +21,7 @@ const (
 	wrongEmailPasswordCombinationError = "Wrong e-mail/password combination"
 	internalServerError                = "Internal server error"
 	invalidRequestPayloadError         = "Invalid request payload"
+	invalidClaimError                  = "Invalid token claim"
 	uuidRegexp                         = "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
 )
 
@@ -52,4 +53,5 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/warehouse", s.GetWareHouseItemsHandler).Methods("GET")
 	s.Router.HandleFunc("/warehouse", s.CreateWarehouseItemHandler).Methods("POST")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.GetWareHouseItemHandler).Methods("GET")
+	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.UpdateWarehouseItemHandler).Methods("PATCH")
 }
