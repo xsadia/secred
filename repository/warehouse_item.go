@@ -32,6 +32,12 @@ func (wi *WarehouseItem) UpdateWarehouseItem(db *sql.DB) error {
 	return err
 }
 
+func (wi *WarehouseItem) DeleteWarehouseItem(db *sql.DB) error {
+	_, err := db.Exec("DELETE FROM warehouse_items WHERE id = $1", wi.Id)
+
+	return err
+}
+
 func GetWarehouseItems(db *sql.DB, start, count int) ([]WarehouseItem, error) {
 	rows, err := db.Query("SELECT * FROM warehouse_items LIMIT $1 OFFSET $2", count, start)
 
