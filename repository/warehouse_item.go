@@ -24,6 +24,14 @@ func (wi *WarehouseItem) GetWarehouseItemById(db *sql.DB) error {
 	).Scan(&wi.Id, &wi.Name, &wi.Quantity, &wi.Min, &wi.Max)
 }
 
+func (wi *WarehouseItem) UpdateWarehouseItem(db *sql.DB) error {
+	_, err := db.Exec(
+		"UPDATE warehouse_items SET quantity = $1, min = $2, max = $3 WHERE id = $4",
+		wi.Quantity, wi.Min, wi.Max, wi.Id)
+
+	return err
+}
+
 func GetWarehouseItems(db *sql.DB, start, count int) ([]WarehouseItem, error) {
 	rows, err := db.Query("SELECT * FROM warehouse_items LIMIT $1 OFFSET $2", count, start)
 
