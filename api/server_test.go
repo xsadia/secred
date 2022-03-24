@@ -420,6 +420,21 @@ func TestWarehouseItems(t *testing.T) {
 		}
 	})
 
+	t.Run("Should throw error when updating a item that doesn't exist", func(t *testing.T) {
+		updateStr := []byte(`{
+			"quantity": 10,
+			"min": 3,
+			"max": 15
+		}`)
+
+		r, _ := http.NewRequest("PATCH", "/warehouse/150e6365-c6cc-48f2-8ecf-e076a0e1e8b7", bytes.NewBuffer(updateStr))
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusNotFound, response.Code)
+	})
+
 	t.Run("Should delete item if item exists", func(t *testing.T) {
 		r, _ := http.NewRequest("DELETE", "/warehouse/"+rs.Id, nil)
 		r.Header.Set("Authorization", tokenString)
