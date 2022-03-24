@@ -374,6 +374,51 @@ func TestWarehouseItems(t *testing.T) {
 			t.Errorf("Expected min to be 3, got %d", item.Max)
 		}
 	})
+
+	t.Run("Should update item if item exists", func(t *testing.T) {
+		updateStr := []byte(`{
+			"quantity": 10,
+			"min": 3,
+			"max": 15
+		}`)
+
+		r, _ := http.NewRequest("PATCH", "/warehouse/"+rs.Id, bytes.NewBuffer(updateStr))
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusNoContent, response.Code)
+
+		r, _ = http.NewRequest("GET", "/warehouse/"+rs.Id, nil)
+		r.Header.Set("Authorization", tokenString)
+
+		response = executeRequest(r)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var item ItemResponse
+		json.Unmarshal(response.Body.Bytes(), &item)
+
+		if item.Error != "" {
+			t.Errorf("Expected error to be nil got %q", item.Error)
+		}
+
+		if item.Name != "testItem" {
+			t.Errorf("Expected name to be testItem, got %q", item.Name)
+		}
+
+		if item.Quantity != 2 {
+			t.Errorf("Expected quantity to be 10, got %d", item.Quantity)
+		}
+
+		if item.Min != 1 {
+			t.Errorf("Expected min to be 2, got %d", item.Min)
+		}
+
+		if item.Max != 3 {
+			t.Errorf("Expected min to be 15, got %d", item.Max)
+		}
+	})
 }
 
 func executeRequest(r *http.Request) *httptest.ResponseRecorder {
