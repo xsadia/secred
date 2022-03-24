@@ -420,7 +420,7 @@ func TestWarehouseItems(t *testing.T) {
 		}
 	})
 
-	t.Run("Should delete item", func(t *testing.T) {
+	t.Run("Should delete item if item exists", func(t *testing.T) {
 		r, _ := http.NewRequest("DELETE", "/warehouse/"+rs.Id, nil)
 		r.Header.Set("Authorization", tokenString)
 
@@ -432,6 +432,22 @@ func TestWarehouseItems(t *testing.T) {
 		r.Header.Set("Authorization", tokenString)
 
 		response = executeRequest(r)
+
+		var item ItemResponse
+		json.Unmarshal(response.Body.Bytes(), &item)
+
+		if item.Error != "Item not found" {
+			t.Errorf("Expected error got %v", item.Error)
+		}
+	})
+
+	t.Run("Should throw error if item doesn't exist", func(t *testing.T) {
+		r, _ := http.NewRequest("DELETE", "/warehouse/"+rs.Id, nil)
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusNotFound, response.Code)
 
 		var item ItemResponse
 		json.Unmarshal(response.Body.Bytes(), &item)
