@@ -288,6 +288,11 @@ func (s *Server) DeleteWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 
 	wi.Id = vars["id"]
 
+	if err = wi.GetWarehouseItemById(s.DB); err != nil {
+		respondWithError(w, http.StatusNotFound, "Item not found")
+		return
+	}
+
 	if err = wi.DeleteWarehouseItem(s.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, internalServerError)
 		return
