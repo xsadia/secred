@@ -54,4 +54,5 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/warehouse", s.CreateWarehouseItemHandler).Methods("POST")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.GetWareHouseItemHandler).Methods("GET")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.UpdateWarehouseItemHandler).Methods("PATCH")
+	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.DeleteWarehouseItemHandler).Methods("DELETE")
 }

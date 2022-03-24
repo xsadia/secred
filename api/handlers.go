@@ -122,15 +122,10 @@ func (s *Server) GetWareHouseItemsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	u, err := internal.ExtractUser(token)
+	_, err = internal.ExtractUser(token, s.DB)
 
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	if err = u.GetUserById(s.DB); err != nil {
-		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
 		return
 	}
 
@@ -170,15 +165,10 @@ func (s *Server) GetWareHouseItemHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	u, err := internal.ExtractUser(token)
+	_, err = internal.ExtractUser(token, s.DB)
 
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	if err = u.GetUserById(s.DB); err != nil {
-		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
 		return
 	}
 
@@ -206,15 +196,10 @@ func (s *Server) CreateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	u, err := internal.ExtractUser(token)
+	_, err = internal.ExtractUser(token, s.DB)
 
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	if err = u.GetUserById(s.DB); err != nil {
-		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
 		return
 	}
 
@@ -247,15 +232,10 @@ func (s *Server) UpdateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	u, err := internal.ExtractUser(token)
+	_, err = internal.ExtractUser(token, s.DB)
 
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	if err = u.GetUserById(s.DB); err != nil {
-		respondWithError(w, http.StatusUnauthorized, invalidClaimError)
 		return
 	}
 
@@ -278,6 +258,37 @@ func (s *Server) UpdateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err = wi.UpdateWarehouseItem(s.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, internalServerError)
+		return
+	}
+
+	respondWithJSON(w, http.StatusNoContent, nil)
+}
+
+func (s *Server) DeleteWarehouseItemHandler(w http.ResponseWriter, r *http.Request) {
+	ah := r.Header.Get("Authorization")
+
+	token, err := validateAuthHeader(ah)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	_, err = internal.ExtractUser(token, s.DB)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	var wi repository.WarehouseItem
+
+	wi.Id = vars["id"]
+
+	if err = wi.DeleteWarehouseItem(s.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, internalServerError)
 		return
 	}
