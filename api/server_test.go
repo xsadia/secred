@@ -419,6 +419,27 @@ func TestWarehouseItems(t *testing.T) {
 			t.Errorf("Expected min to be 15, got %d", item.Max)
 		}
 	})
+
+	t.Run("Should delete item", func(t *testing.T) {
+		r, _ := http.NewRequest("DELETE", "/warehouse/"+rs.Id, nil)
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusNoContent, response.Code)
+
+		r, _ = http.NewRequest("GET", "/warehouse/"+rs.Id, nil)
+		r.Header.Set("Authorization", tokenString)
+
+		response = executeRequest(r)
+
+		var item ItemResponse
+		json.Unmarshal(response.Body.Bytes(), &item)
+
+		if item.Error != "Item not found" {
+			t.Errorf("Expected error got %v", item.Error)
+		}
+	})
 }
 
 func executeRequest(r *http.Request) *httptest.ResponseRecorder {
