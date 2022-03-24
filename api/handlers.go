@@ -250,6 +250,8 @@ func (s *Server) UpdateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	defer r.Body.Close()
+
 	wi.Id = vars["id"]
 
 	if err = wi.GetWarehouseItemById(s.DB); err != nil {
