@@ -1,13 +1,9 @@
 package internal
 
 import (
-	"database/sql"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/xsadia/secred/repository"
 )
 
 var notSoSecret = "Karinne"
@@ -39,20 +35,20 @@ func VerifyToken(token string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func ExtractUser(token string, db *sql.DB) (repository.User, error) {
-	claims, err := VerifyToken(token)
+// func ExtractUser(token string) (repository.User, error) {
+// 	claims, err := VerifyToken(token)
 
-	if err != nil {
-		return repository.User{}, err
-	}
+// 	if err != nil {
+// 		return repository.User{}, err
+// 	}
 
-	uid := fmt.Sprintf("%v", claims["user_id"])
+// 	uid := fmt.Sprintf("%v", claims["user_id"])
 
-	u := repository.User{Id: uid}
+// 	u := repository.User{Id: uid}
 
-	if err = u.GetUserById(db); err != nil {
-		return repository.User{}, errors.New("invalid token claim")
-	}
+// 	if err = u.GetUserById(db); err != nil {
+// 		return repository.User{}, errors.New("invalid token claim")
+// 	}
 
-	return u, nil
-}
+// 	return u, nil
+// }

@@ -122,10 +122,10 @@ func (s *Server) GetWareHouseItemsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	_, err = internal.ExtractUser(token, s.DB)
+	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
 		return
 	}
 
@@ -165,10 +165,10 @@ func (s *Server) GetWareHouseItemHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = internal.ExtractUser(token, s.DB)
+	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
 		return
 	}
 
@@ -196,10 +196,10 @@ func (s *Server) CreateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	_, err = internal.ExtractUser(token, s.DB)
+	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
 		return
 	}
 
@@ -232,10 +232,10 @@ func (s *Server) UpdateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	_, err = internal.ExtractUser(token, s.DB)
+	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
 		return
 	}
 
@@ -277,10 +277,10 @@ func (s *Server) DeleteWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	_, err = internal.ExtractUser(token, s.DB)
+	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
 		return
 	}
 
