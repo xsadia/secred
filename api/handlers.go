@@ -67,7 +67,7 @@ func (s *Server) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	go internal.SendConfirmationEmail([]string{u.Email}, u.Id)
 
-	respondWithJSON(w, http.StatusNoContent, map[string]string{})
+	respondWithJSON(w, http.StatusNoContent, nil)
 }
 
 func (s *Server) AuthUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +99,7 @@ func (s *Server) AuthUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _ := internal.CreateToken(u.Id, 9999)
+	token, _ := internal.CreateToken(u.Id, 60*24*7)
 
 	user := repository.User{
 		Id:           u.Id,
@@ -125,7 +125,7 @@ func (s *Server) GetWareHouseItemsHandler(w http.ResponseWriter, r *http.Request
 	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
+		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -168,7 +168,7 @@ func (s *Server) GetWareHouseItemHandler(w http.ResponseWriter, r *http.Request)
 	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
+		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -199,7 +199,7 @@ func (s *Server) CreateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
+		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -235,7 +235,7 @@ func (s *Server) UpdateWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
+		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -280,7 +280,7 @@ func (s *Server) DeleteWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 	_, err = internal.VerifyToken(token)
 
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, malformedJWTError)
+		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
