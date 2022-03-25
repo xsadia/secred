@@ -12,7 +12,7 @@ func CreateToken(id string, exp time.Duration) (token string, err error) {
 
 	claims := jwt.MapClaims{}
 	claims["user_id"] = id
-	claims["exp"] = time.Now().Add(time.Hour * exp).Unix()
+	claims["exp"] = time.Now().Add(time.Minute * exp).Unix()
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, err = at.SignedString([]byte(notSoSecret))
