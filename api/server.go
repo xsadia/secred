@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/xsadia/secred/storage"
@@ -39,7 +40,10 @@ func (s *Server) InitializeDB(host, user, password, dbname string) {
 }
 
 func (s *Server) Run(address string) {
-	log.Fatal(http.ListenAndServe(address, s.Router))
+	ao := handlers.AllowedOrigins([]string{"*"})
+	am := handlers.AllowedMethods([]string{"POST", "GET", "OPTIONS", "PUT", "DELETE", "PATCH"})
+	ah := handlers.AllowedHeaders([]string{"Accept", "Content-Type", "Content-Length", "Authorization"})
+	log.Fatal(http.ListenAndServe(address, handlers.CORS(ao, am, ah)(s.Router)))
 }
 
 func (s *Server) InitializeRoutes() {
