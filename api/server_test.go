@@ -70,7 +70,7 @@ func TestCreateUser(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 
 		response := executeRequest(r)
-		checkResponseCode(t, 204, response.Code)
+		checkResponseCode(t, http.StatusCreated, response.Code)
 	})
 
 	t.Run("should not create user and return http code 409 if e-mail is already in use", func(t *testing.T) {
@@ -97,6 +97,65 @@ func TestCreateUser(t *testing.T) {
 		if m["error"] != emailAlreadyInUserError {
 			t.Errorf("expected '%v', got '%v'", emailAlreadyInUserError, m["error"])
 		}
+	})
+}
+
+func TestMe(t *testing.T) {
+	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(userCreationStr))
+	r.Header.Set("Content-Type", "application/json")
+
+	executeRequest(r)
+
+	u := repository.User{Email: "testuser@example.com"}
+	u.GetUserByEmail(s.DB)
+
+	r, _ = http.NewRequest("GET", "/user/confirm/"+u.Id, nil)
+
+	executeRequest(r)
+
+	r, _ = http.NewRequest("POST", "/auth", bytes.NewBuffer(userAuthStr))
+
+	authResponse := executeRequest(r)
+
+	var am map[string]interface{}
+
+	json.Unmarshal(authResponse.Body.Bytes(), &am)
+
+	tokenString := fmt.Sprintf("bearer %v", am["token"])
+
+	t.Run("Should return user's information if authenticated", func(t *testing.T) {
+		r, _ := http.NewRequest("GET", "/user/me", nil)
+		r.Header.Set("Authorization", tokenString)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var m map[string]interface{}
+
+		json.Unmarshal(response.Body.Bytes(), &m)
+
+		if m["id"] == "" {
+			t.Error("expected id to be set")
+		}
+
+		if !reflect.DeepEqual(m["email"], "testuser@example.com") {
+			t.Errorf("expected e-mail to be '%v', got '%v'", "testuser@example.com", m["email"])
+		}
+
+		if !reflect.DeepEqual(m["username"], "testUser") {
+			t.Errorf("expected username to be '%v', got '%v'", "testUser", m["username"])
+		}
+
+	})
+
+	t.Run("Should return error if user is not authenticated", func(t *testing.T) {
+		r, _ := http.NewRequest("GET", "/user/me", nil)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusUnauthorized, response.Code)
+
 	})
 }
 
