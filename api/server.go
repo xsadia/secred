@@ -50,6 +50,7 @@ func (s *Server) InitializeRoutes() {
 
 	s.Router = mux.NewRouter()
 	s.Router.HandleFunc("/user", s.CreateUserHandler).Methods("POST")
+	s.Router.HandleFunc("/user/me", s.MeHandler).Methods("GET")
 	s.Router.HandleFunc(
 		"/user/confirm/{id:"+uuidRegexp+"}",
 		s.ActivateUserHandler,

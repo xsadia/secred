@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -42,6 +43,37 @@ func (s *Server) ActivateUserHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "http://google.com", http.StatusPermanentRedirect)
 }
 
+func (s *Server) MeHandler(w http.ResponseWriter, r *http.Request) {
+	ah := r.Header.Get("Authorization")
+
+	token, err := validateAuthHeader(ah)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	claims, err := internal.VerifyToken(token)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	var u repository.User
+
+	u.Id = fmt.Sprintf("%v", claims["user_id"])
+
+	err = u.GetUserById(s.DB)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, internalServerError)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, u)
+}
+
 func (s *Server) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var u repository.User
 	decoder := json.NewDecoder(r.Body)
@@ -67,7 +99,7 @@ func (s *Server) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	go internal.SendConfirmationEmail([]string{u.Email}, u.Id)
 
-	respondWithJSON(w, http.StatusNoContent, nil)
+	respondWithJSON(w, http.StatusCreated, nil)
 }
 
 func (s *Server) AuthUserHandler(w http.ResponseWriter, r *http.Request) {
