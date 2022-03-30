@@ -82,6 +82,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setCookie(undefined, "@secred:token", data.token, {
       maxAge: 60 * 60 * 24 * 7,
+      sameSite: "none",
+      secure: true,
     });
 
     setUser({
