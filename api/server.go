@@ -61,4 +61,5 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.GetWareHouseItemHandler).Methods("GET")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.UpdateWarehouseItemHandler).Methods("PATCH")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.DeleteWarehouseItemHandler).Methods("DELETE")
+	s.Router.HandleFunc("/warehouse/upload", s.UploadCSVWarehouse).Methods("POST")
 }
