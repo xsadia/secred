@@ -12,6 +12,7 @@ import (
 
 const badCSVHeadersError = "bad headers on CSV file"
 
+// TODO upgrade to Go 1.18 to use generics for school items as well
 func newWarehouseItemListFromCSV(lines [][]string) ([]repository.WarehouseItem, error) {
 	wil := make([]repository.WarehouseItem, len(lines)-1)
 	indexes := make(map[string]int, len(lines[0]))
