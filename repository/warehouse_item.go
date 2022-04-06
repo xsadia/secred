@@ -1,6 +1,8 @@
 package repository
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type WarehouseItem struct {
 	Id       string `json:"id"`
@@ -34,6 +36,17 @@ func (wi *WarehouseItem) UpdateWarehouseItem(db *sql.DB) error {
 
 func (wi *WarehouseItem) DeleteWarehouseItem(db *sql.DB) error {
 	_, err := db.Exec("DELETE FROM warehouse_items WHERE id = $1", wi.Id)
+
+	return err
+}
+
+func (wi *WarehouseItem) UpSertWarehouseItem(db *sql.DB) error {
+	_, err := db.Exec(
+		`INSERT INTO warehouse_items (name, quantity, min, max)
+		 VALUES ($1, $2, $3, $4)
+		 ON CONFLICT (name) 
+		 DO UPDATE SET quantity = warehouse_items.quantity + EXCLUDED.quantity, min = EXCLUDED.min, max = EXCLUDED.max`,
+		&wi.Name, &wi.Quantity, &wi.Min, &wi.Max)
 
 	return err
 }
