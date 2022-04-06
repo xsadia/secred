@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -330,6 +332,69 @@ func (s *Server) DeleteWarehouseItemHandler(w http.ResponseWriter, r *http.Reque
 	if err = wi.DeleteWarehouseItem(s.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, internalServerError)
 		return
+	}
+
+	respondWithJSON(w, http.StatusNoContent, nil)
+}
+
+func (s *Server) UploadCSVWarehouse(w http.ResponseWriter, r *http.Request) {
+	ah := r.Header.Get("Authorization")
+
+	token, err := validateAuthHeader(ah)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	_, err = internal.VerifyToken(token)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	r.ParseMultipartForm(10 << 20)
+
+	file, _, err := r.FormFile("csvFile")
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	defer file.Close()
+
+	tempFile, err := ioutil.TempFile("./temp", "upload-*.csv")
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	defer tempFile.Close()
+	defer os.Remove(tempFile.Name())
+
+	fileBytes, err := ioutil.ReadAll(file)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	tempFile.Write(fileBytes)
+
+	wil, err := internal.ParseCSV(tempFile.Name())
+
+	if err != nil {
+		respondWithError(w, http.StatusNotAcceptable, err.Error())
+		return
+	}
+
+	for _, wi := range wil {
+		go func(curr repository.WarehouseItem) {
+			curr.UpSertWarehouseItem(s.DB)
+		}(wi)
 	}
 
 	respondWithJSON(w, http.StatusNoContent, nil)
