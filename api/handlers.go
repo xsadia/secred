@@ -143,7 +143,7 @@ func (s *Server) AuthUserHandler(w http.ResponseWriter, r *http.Request) {
 		Activated:    u.Activated,
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{"token": token, "user": user})
+	respondWithJSON(w, http.StatusOK, map[string]any{"token": token, "user": user})
 }
 
 func (s *Server) GetWareHouseItemsHandler(w http.ResponseWriter, r *http.Request) {
@@ -420,7 +420,7 @@ func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+func respondWithJSON(w http.ResponseWriter, code int, payload any) {
 	response, _ := json.Marshal(payload)
 
 	w.Header().Set("Content-Type", "application/json")
