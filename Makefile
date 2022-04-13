@@ -8,6 +8,6 @@ run:
 	go run cmd/main.go
 
 test:
-	go test -v ./api
+	go test -v ./api ./internal
 
 .PHONY: migrateup migratedown
