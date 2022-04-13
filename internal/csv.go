@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/csv"
 	"errors"
+	"net/textproto"
 	"os"
 	"strconv"
 	"strings"
@@ -78,4 +79,12 @@ func ParseCSV(fileName string) ([]repository.WarehouseItem, error) {
 	}
 
 	return wil, nil
+}
+
+func CheckMIMEContentType(header textproto.MIMEHeader) error {
+	if header["Content-Type"][0] != "text/csv" {
+		return errors.New("wrong file type. Try CSV format")
+	}
+
+	return nil
 }
