@@ -356,10 +356,15 @@ func (s *Server) UploadCSVWarehouse(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseMultipartForm(10 << 20)
 
-	file, _, err := r.FormFile("csvFile")
+	file, header, err := r.FormFile("csvFile")
 
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = internal.CheckMIMEContentType(header.Header); err != nil {
+		respondWithError(w, http.StatusUnsupportedMediaType, err.Error())
 		return
 	}
 
