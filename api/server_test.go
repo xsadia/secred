@@ -532,6 +532,58 @@ func TestWarehouseItems(t *testing.T) {
 	})
 }
 
+func TestSchool(t *testing.T) {
+	clearTables()
+	schoolCreationString := []byte(`{
+		"name": "CSC"
+	}
+	`)
+	token := createAndAuthUser()
+
+	t.Run("Should create school", func(t *testing.T) {
+		r, _ := http.NewRequest("POST", "/school", bytes.NewBuffer(schoolCreationString))
+		r.Header.Set("Authorization", token)
+
+		response := executeRequest(r)
+
+		checkResponseCode(t, http.StatusCreated, response.Code)
+
+		var school repository.School
+		json.Unmarshal(response.Body.Bytes(), &school)
+
+		if school.Name != "CSC" {
+			t.Errorf("Expected school name to be %q, got %q", "CSC", school.Name)
+		}
+	})
+}
+
+func createAndAuthUser() string {
+
+	r, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(userCreationStr))
+	r.Header.Set("Content-Type", "application/json")
+
+	executeRequest(r)
+
+	u := repository.User{Email: "testuser@example.com"}
+	u.GetUserByEmail(s.DB)
+
+	r, _ = http.NewRequest("GET", "/user/confirm/"+u.Id, nil)
+
+	executeRequest(r)
+
+	r, _ = http.NewRequest("POST", "/auth", bytes.NewBuffer(userAuthStr))
+
+	authResponse := executeRequest(r)
+
+	var am map[string]interface{}
+
+	json.Unmarshal(authResponse.Body.Bytes(), &am)
+
+	tokenString := fmt.Sprintf("bearer %v", am["token"])
+
+	return tokenString
+}
+
 func executeRequest(r *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	s.Router.ServeHTTP(rr, r)
@@ -550,4 +602,6 @@ func clearTables() {
 	s.DB.Exec("DELETE FROM users")
 
 	s.DB.Exec("DELETE FROM warehouse_items")
+
+	s.DB.Exec("DELETE FROM schools")
 }
