@@ -51,15 +51,15 @@ func (s *Server) InitializeRoutes() {
 	s.Router = mux.NewRouter()
 	s.Router.HandleFunc("/user", s.CreateUserHandler).Methods("POST")
 	s.Router.HandleFunc("/user/me", s.MeHandler).Methods("GET")
-	s.Router.HandleFunc(
-		"/user/confirm/{id:"+uuidRegexp+"}",
-		s.ActivateUserHandler,
-	).Methods("GET")
+	s.Router.HandleFunc("/user/confirm/{id:"+uuidRegexp+"}", s.ActivateUserHandler).Methods("GET")
 	s.Router.HandleFunc("/auth", s.AuthUserHandler).Methods("POST")
+
 	s.Router.HandleFunc("/warehouse", s.GetWareHouseItemsHandler).Methods("GET")
 	s.Router.HandleFunc("/warehouse", s.CreateWarehouseItemHandler).Methods("POST")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.GetWareHouseItemHandler).Methods("GET")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.UpdateWarehouseItemHandler).Methods("PATCH")
 	s.Router.HandleFunc("/warehouse/{id:"+uuidRegexp+"}", s.DeleteWarehouseItemHandler).Methods("DELETE")
 	s.Router.HandleFunc("/warehouse/upload", s.UploadCSVWarehouse).Methods("POST")
+
+	s.Router.HandleFunc("/school", s.CreateSchoolHandler).Methods("POST")
 }
