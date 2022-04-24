@@ -34,6 +34,8 @@ func (s *Server) CreateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	defer r.Body.Close()
+
 	if err = sc.CreateSchool(s.DB); err != nil {
 		internal.RespondWithError(w, http.StatusConflict, "School already registered")
 		return
