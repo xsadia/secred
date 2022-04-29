@@ -1,18 +1,21 @@
 package main
 
 import (
+	"os"
+
+	"github.com/joho/godotenv"
 	"github.com/xsadia/secred/api"
-	"github.com/xsadia/secred/config"
 )
 
 func main() {
+	godotenv.Load(".env")
 	s := api.Server{}
 	s.InitializeRoutes()
 	s.InitializeDB(
-		config.GetEnv(".env", "APP_DB_HOST"),
-		config.GetEnv(".env", "APP_DB_USERNAME"),
-		config.GetEnv(".env", "APP_DB_PASSWORD"),
-		config.GetEnv(".env", "APP_DB_NAME"),
+		os.Getenv("APP_DB_HOST"),
+		os.Getenv("APP_DB_USERNAME"),
+		os.Getenv("APP_DB_PASSWORD"),
+		os.Getenv("APP_DB_NAME"),
 	)
 	s.Run(":1337")
 }

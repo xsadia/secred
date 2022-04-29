@@ -1,17 +1,10 @@
 package config
 
-import (
-	"log"
-	"os"
+// func GetEnv(path, key string) string {
+// 	err := godotenv.Load(path)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	"github.com/joho/godotenv"
-)
-
-func GetEnv(path, key string) string {
-	err := godotenv.Load(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return os.Getenv(key)
-}
+// 	return os.Getenv(key)
+// }

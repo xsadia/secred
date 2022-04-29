@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/xsadia/secred/config"
+	"github.com/joho/godotenv"
 	"github.com/xsadia/secred/repository"
 )
 
@@ -39,14 +39,15 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	godotenv.Load("../.env")
 	s = Server{}
 
 	s.InitializeRoutes()
 	s.InitializeDB(
-		config.GetEnv("../.env", "APP_DB_HOST"),
-		config.GetEnv("../.env", "APP_DB_USERNAME"),
-		config.GetEnv("../.env", "APP_DB_PASSWORD"),
-		config.GetEnv("../.env", "APP_DB_NAME"),
+		os.Getenv("APP_DB_HOST"),
+		os.Getenv("APP_DB_USERNAME"),
+		os.Getenv("APP_DB_PASSWORD"),
+		os.Getenv("APP_DB_NAME"),
 	)
 
 	code := m.Run()

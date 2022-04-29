@@ -4,9 +4,9 @@ import { useRouter } from "next/router";
 
 type AuthContextData = {
   isAuthenticated: boolean;
-  isLoading: boolean;
   user: User | null;
   signIn: (credentials: Credentials) => Promise<void>;
+  logout: () => void;
 };
 
 type Credentials = {
@@ -26,7 +26,6 @@ export const AuthContext = createContext({} as AuthContextData);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const isAuthenticated = !!user;
-  const [isLoading, setIsloading] = useState<boolean>(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const response = await fetch("http://localhost:1337/user/me", {
           method: "GET",
           headers: {
-            "Content-Type": "application/json",
+            //"Content-Type": "application/json",
             Authorization: `bearer ${token}`,
           },
         });
@@ -48,7 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (data.error === TOKEN_EXPIRED_ERROR) {
             destroyCookie(undefined, "@secred:token");
           }
-
           router.push("/login");
         }
 
@@ -58,10 +56,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       })();
 
-      setIsloading(false);
       return;
     }
-
     router.push("/login");
   }, []);
 
@@ -94,10 +90,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     destroyCookie(undefined, "@secred:token");
+    router.push("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, signIn }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, signIn, logout }}>
       {children}
     </AuthContext.Provider>
   );

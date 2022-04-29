@@ -2,11 +2,15 @@ package internal
 
 import (
 	"net/smtp"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func SendConfirmationEmail(to []string, id string) bool {
-	from := "lipearthur81@gmail.com"
-	pmail := "egcdbdpzhljhgnkh"
+	godotenv.Load(".env")
+	from := os.Getenv("SMTP_EMAIL")
+	pmail := os.Getenv("SMTP_PASSWORD")
 
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
